@@ -1,0 +1,55 @@
+﻿Prog 
+	Stmts EOF
+Block
+	{ Stmts }
+Stmts
+	Stmts Stmt
+	Stmt
+Stmt
+	var IdentList;
+	IdentAssign;
+	if (RelExpr) Block else Block
+	while(RelExpr) Block
+	for(Assign to Variable) Block
+	for(Assign downto Variable) Block
+	for(Assign;RelExpr;Assign) Block
+	read Identifier;
+	WriteStmt;
+	Block
+WriteStmt
+	write String
+	write Expr
+IdentList =
+	IdentList,IdentDeclOptAssign
+	IdentDeclOptAssign
+IdentDeclOptAssign
+	IdentAssign
+	Ident
+IdentAssign
+	Ident = IdentAssign
+	Ident = Expr
+Expr
+	Expr Plus Term
+	Expr Minus Term
+    Term
+Term
+    Term Times Factor
+    Term Divide Factor
+    Factor
+Factor
+    Variable
+    (Expr)
+RelExpr
+	Expr RelOp Expr
+RelOp 
+	== != < > <= >=
+Variable
+	Identifier
+	Integer
+Identifier
+	['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9']*
+String
+	string
+Comment
+	//
+	/* */

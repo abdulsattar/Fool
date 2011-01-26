@@ -1,0 +1,96 @@
+﻿%{
+open Ast
+%}
+
+%start start
+
+%token DELIM COMMA OPAREN CPAREN OBLOCK CBLOCK EOF
+%token VAR IF ELSE WHILE FOR TO DOWNTO READ WRITE
+%token ASSIGN
+%token PLUS MINUS TIMES DIVIDE
+%token EQ NEQ GT LT GTE LTE
+%token <string> IDENT
+%token <string> STRING
+%token <System.Int32> INT
+
+%type <Prog> start
+
+%%
+
+start: 
+    | Stmts EOF { StmtsProg($1) }
+
+Block:
+    | OBLOCK Stmts CBLOCK { StmtsBlock($2) }
+
+Stmts:
+    | StmtsList { StmtsList(List.rev $1) }
+
+StmtsList:
+    | StmtsList Stmt { $2 :: $1 }
+    | Stmt {[$1]}
+
+Stmt:
+    | VAR IdentList DELIM { DeclStmt($2) } 
+    | Assign DELIM { AssignStmt($1) }
+    | IF OPAREN RelExpr CPAREN Block ELSE Block { IfStmt($3, $5, $7) }
+    | WHILE OPAREN RelExpr CPAREN Block { WhileStmt($3, $5) }
+    | FOR OPAREN Assign TO Variable CPAREN Block { ForToStmt($3,$5,$7) }
+    | FOR OPAREN Assign DOWNTO Variable CPAREN Block { ForDownToStmt($3,$5,$7) }
+    | FOR OPAREN Assign DELIM RelExpr DELIM Assign CPAREN Block { ForStmt($3, $5, $7, $9) }
+    | READ Identifier DELIM { ReadStmt($2) }
+    | WriteStmt DELIM { WriteStmt($1) }
+    | Block { BlockStmt($1) }
+
+WriteStmt:
+    | WRITE String { WriteStr($2) }
+    | WRITE Expr { WriteExpr($2) }
+
+IdentList:
+    | IdentListList { IdentList(List.rev $1) }
+
+IdentListList:
+    | IdentListList COMMA IdentDeclOptAssign { $3 :: $1 }
+    | IdentDeclOptAssign { [$1] }
+
+IdentDeclOptAssign:
+    | Assign { Assign($1) }
+    | Identifier { Ident($1) }
+
+Assign:
+    | Identifier ASSIGN Expr { AssignExpr($1, $3) }
+
+Expr:
+    | Expr PLUS Term { Plus($1, $3) }
+    | Expr MINUS Term { Minus($1, $3) }
+    | Term { TermExpr($1) }
+
+Term:
+    | Term TIMES Factor { Times($1, $3) }
+    | Term DIVIDE Factor { Divide($1, $3) }
+    | Factor { FactorTerm($1) }
+
+Factor:
+    | Variable { VarFactor($1) }
+    | OPAREN Expr CPAREN { ParenExpr($2) }
+
+RelExpr:
+    | Expr RelOp Expr { RelExpr($1, $3, $2) }
+
+RelOp:
+    | EQ { Eq }
+    | NEQ { Neq }
+    | GT { Gt }
+    | LT { Lt }
+    | GTE { Gte }
+    | LTE { Lte }
+
+Variable:
+    | Identifier { IdentVariable($1) }
+    | INT { IntVariable($1) }
+
+String:
+    | STRING { String($1) }
+
+Identifier:
+    | IDENT { Identifier($1) }
