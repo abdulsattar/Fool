@@ -63,6 +63,7 @@ and RelOp =
 and Variable =
     | IdentVariable of Identifier
     | IntVariable of int
+    | FloatVariable of float
 
 and String = 
 | String of string

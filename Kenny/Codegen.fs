@@ -158,6 +158,7 @@ let generate(p:Prog, fileName) =
         | IdentVariable(i) -> let id = gIdentifier(i)
                               il.Emit(OpCodes.Ldloc, id)
         | IntVariable(i) -> il.Emit(OpCodes.Ldc_I4, i)
+        | FloatVariable(f) -> il.Emit(OpCodes.Ldc_R8, f)
 
     and gString (s:Ast.String) : string =
         match s with String(str) -> str

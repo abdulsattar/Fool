@@ -12,6 +12,7 @@ open Ast
 %token <string> IDENT
 %token <string> STRING
 %token <System.Int32> INT
+%token <System.Double> FLOAT
 
 %type <Prog> start
 
@@ -88,6 +89,7 @@ RelOp:
 Variable:
     | Identifier { IdentVariable($1) }
     | INT { IntVariable($1) }
+    | FLOAT { FloatVariable($1) }
 
 String:
     | STRING { String($1) }

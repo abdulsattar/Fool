@@ -58,7 +58,8 @@ rule tokenize = parse
 | '>'           { GT }
 | '<'           { LT }
 // Integer
-| digit+        { INT (Int32.Parse(lexeme lexbuf)) }
+| digit+                                   { INT (Int32.Parse(lexeme lexbuf)) }
+| digit+ '.' (digit+)? (['e' 'E'] digit+)? { FLOAT (Convert.ToDouble(lexeme lexbuf)) }
 // EOF
 | eof   { EOF }
 
