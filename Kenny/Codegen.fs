@@ -3,6 +3,9 @@ open Ast
 open System
 open System.Reflection
 open System.Reflection.Emit
+open System.Collections.Generic
+
+type SymbolTable = { this:IDictionary<string, LocalBuilder>; mutable parent:SymbolTable option }
 
 let generate(p:Prog, fileName) =
     
@@ -13,15 +16,17 @@ let generate(p:Prog, fileName) =
     let typeb = modb.DefineType(fileName)
     let methb = typeb.DefineMethod("Main", MethodAttributes.Static, typeof<Void>, Type.EmptyTypes)
     let il = methb.GetILGenerator()
-    let st = new System.Collections.Generic.Dictionary<string, LocalBuilder>()
+    let st = ref {this = new System.Collections.Generic.Dictionary<string, LocalBuilder>(); parent = None }
 
     let rec gProg(p:Prog) =
         match p with StmtsProg(s) -> gStmts(s)
 
     and gBlock(b:Block) =
         il.BeginScope()
+        st := {this = new Dictionary<string, LocalBuilder>(); parent = Some(!st) }
         match b with StmtsBlock(s) -> gStmts(s)
         il.EndScope()
+        st := match (!st).parent with Some(a) -> a | None -> !st
 
     and gStmts (s:Stmts) =
         match s with StmtsList(sl) -> for st in sl do gStmt(st)
@@ -98,7 +103,7 @@ let generate(p:Prog, fileName) =
         ()
 
     and gIdentDeclOptAssign (i:IdentDeclOptAssign) =
-        let declareLocal id = match id with Identifier(s) -> st.Add(s, il.DeclareLocal(typeof<int>))
+        let declareLocal id = match id with Identifier(s) -> (!st).this.Add(s, il.DeclareLocal(typeof<int>))
         match i with
         | Assign(a) -> match a with AssignExpr(i, _) -> declareLocal(i)
                        gAssign(a)
@@ -159,8 +164,12 @@ let generate(p:Prog, fileName) =
 
     and gIdentifier (i:Identifier) : LocalBuilder =
         let id = match i with Identifier(s) -> s
-        if st.ContainsKey(id) then st.[id]
-        else failwith "Identifier not declared"
+        let rec findIdent st = 
+            if st.this.ContainsKey(id) then st.this.[id]
+            else match st.parent with
+                    | Some(p) -> findIdent(p)
+                    | None    -> failwith "Identifier not declared"
+        findIdent !st
 
     gProg(p)
 
