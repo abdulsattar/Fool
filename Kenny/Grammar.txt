@@ -6,19 +6,16 @@ Stmts
 	Stmts Stmt
 	Stmt
 Stmt
-	var IdentList;
+	Type IdentList;
 	IdentAssign;
-	if (RelExpr) Block else Block
-	while(RelExpr) Block
-	for(Assign to Variable) Block
-	for(Assign downto Variable) Block
-	for(Assign;RelExpr;Assign) Block
+	if (Bool) Block else Block
+	while(Bool) Block
+	for(Assign to Expr) Block
+	for(Assign downto Expr) Block
+	for(Assign;Bool;Assign) Block
 	read Identifier;
-	WriteStmt;
+    write Value;
 	Block
-WriteStmt
-	write String
-	write Expr
 IdentList =
 	IdentList,IdentDeclOptAssign
 	IdentDeclOptAssign
@@ -26,8 +23,7 @@ IdentDeclOptAssign
 	IdentAssign
 	Ident
 IdentAssign
-	Ident = IdentAssign
-	Ident = Expr
+	Ident = Value
 Expr
 	Expr Plus Term
 	Expr Minus Term
@@ -37,19 +33,42 @@ Term
     Term Divide Factor
     Factor
 Factor
-    Variable
+    Int
     (Expr)
 RelExpr
 	Expr RelOp Expr
 RelOp 
 	== != < > <= >=
-Variable
-	Identifier
-	Integer
-    Float
+Value
+    Expr
+    FloatValue
+    CharValue
+    BoolValue
+    StringValue
 Identifier
 	['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9']*
+Int
+	Identifier
+	Integer
+Float
+    Identifier
+    float
+Char
+    Identifier
+    char
+Bool
+    BoolRelExpr
+    Identifier
+    true
+    false
 String
+    Identifier
 	string
+Type
+    int
+    float
+    char
+    string
+    bool
 Comment
 	//

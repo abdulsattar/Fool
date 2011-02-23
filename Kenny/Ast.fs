@@ -1,7 +1,8 @@
 ﻿module Ast
 open System
 
-type Prog = | StmtsProg of Stmts
+type Prog = 
+    | StmtsProg of Stmts
 
 and Block =
     | StmtsBlock of Stmts
@@ -10,20 +11,16 @@ and Stmts =
     | StmtsList of Stmt list
 
 and Stmt =
-    | DeclStmt of IdentList
+    | DeclStmt of Type * IdentList
     | AssignStmt of Assign
-    | IfStmt of RelExpr * Block * Block
-    | WhileStmt of RelExpr * Block
-    | ForToStmt of Assign * Variable * Block
-    | ForDownToStmt of Assign * Variable * Block
-    | ForStmt of Assign * RelExpr * Assign * Block
+    | IfStmt of Bool * Block * Block
+    | WhileStmt of Bool * Block
+    | ForToStmt of Assign * Expr * Block
+    | ForDownToStmt of Assign * Expr * Block
+    | ForStmt of Assign * Bool * Assign * Block
     | ReadStmt of Identifier
-    | WriteStmt of WriteStmt
+    | WriteStmt of Value
     | BlockStmt of Block
-
-and WriteStmt =
-    | WriteStr of String
-    | WriteExpr of Expr
 
 and IdentList =
     | IdentList of IdentDeclOptAssign list
@@ -33,7 +30,7 @@ and IdentDeclOptAssign =
     | Ident of Identifier
 
 and Assign = 
-| AssignExpr of Identifier * Expr
+    | AssignValue of Identifier * Value
 
 and Expr =
     | Plus of Expr * Term
@@ -46,11 +43,11 @@ and Term =
     | FactorTerm of Factor
 
 and Factor =
-    | VarFactor of Variable
+    | IntFactor of Int
     | ParenExpr of Expr
 
 and RelExpr = 
-| RelExpr of Expr * Expr * RelOp
+    | RelExpr of Expr * Expr * RelOp
 
 and RelOp =
     | Eq
@@ -60,13 +57,41 @@ and RelOp =
     | Gte
     | Lte
 
-and Variable =
-    | IdentVariable of Identifier
-    | IntVariable of int
-    | FloatVariable of float
+and Value =
+    | ExprValue of Expr
+    | FloatValue of Float
+    | CharValue of Char
+    | StringValue of String
+    | BoolValue of Bool
 
-and String = 
-| String of string
+and Int =
+    | IdentInt of Identifier
+    | IntLit of int
+
+and Float = 
+    | IdentFloat of Identifier
+    | FloatLit of float
+
+and Char =
+    | IdentChar of Identifier
+    | CharLit of char
+
+and String =
+    | IdentString of Identifier
+    | StringLit of string
+
+and Bool =
+    | BoolRelExpr of RelExpr
+    | IdentBool of Identifier
+    | TrueBool
+    | FalseBool
+
+and Type =
+    | IntType
+    | FloatType
+    | CharType
+    | StringType
+    | BoolType
 
 and Identifier = 
-| Identifier of string
+    | Identifier of string

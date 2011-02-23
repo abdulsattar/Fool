@@ -14,7 +14,7 @@ let ident = alpha (alpha | digit)*
 let whitespace = [' ' '\t' ]
 let newline = ('\n' | '\r' '\n')
 let comment = "//" [^'\r' '\n']*
-
+let char = "'" ( "\\n" | "\\a" | "\\t" | "\\r" | "\\\\" | "\\'" | [^ '\'']) "'"
 
 rule tokenize = parse
 | whitespace     { tokenize lexbuf }
@@ -22,10 +22,16 @@ rule tokenize = parse
 | comment        { tokenize lexbuf }
 | '\"'           {
                      let sb = new System.Text.StringBuilder()
-                     STRING (string sb lexbuf)
+                     STRINGLIT (string sb lexbuf)
                  }
+// Types
+| "int"    { INTTYPE }
+| "float"  { FLOATTYPE }
+| "char"   { CHARTYPE }
+| "string" { STRINGTYPE }
+| "bool"   { BOOLTYPE }
+
 //Keywords
-| "var"          { VAR }
 | "if"           { IF }
 | "else"         { ELSE }
 | "while"        { WHILE }
@@ -34,8 +40,14 @@ rule tokenize = parse
 | "downto"       { DOWNTO }
 | "read"         { READ }
 | "write"        { WRITE }
+
+// Reserved Words
+| "true"         { TRUE }
+| "false"        { FALSE }
+
 // Identifiers
 | ident          { IDENT (lexeme lexbuf) }
+
 // Misc
 | '('            { OPAREN }
 | ')'            { CPAREN }
@@ -57,9 +69,11 @@ rule tokenize = parse
 | "!="          { NEQ }
 | '>'           { GT }
 | '<'           { LT }
-// Integer
-| digit+                                   { INT (Int32.Parse(lexeme lexbuf)) }
-| digit+ '.' (digit+)? (['e' 'E'] digit+)? { FLOAT (Convert.ToDouble(lexeme lexbuf)) }
+// Numbers
+| digit+                                     { INTLIT (Int32.Parse(lexeme lexbuf)) }
+| digit+ '.' ((digit+) (['e' 'E'] digit+)?)? { FLOATLIT (Convert.ToDouble(lexeme lexbuf)) }
+// Chars
+| char          { CHARLIT ((lexeme lexbuf).[1]) }
 // EOF
 | eof   { EOF }
 

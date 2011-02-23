@@ -5,14 +5,17 @@ open Ast
 %start start
 
 %token DELIM COMMA OPAREN CPAREN OBLOCK CBLOCK EOF
-%token VAR IF ELSE WHILE FOR TO DOWNTO READ WRITE
+%token IF ELSE WHILE FOR TO DOWNTO READ WRITE
+%token INTTYPE FLOATTYPE CHARTYPE STRINGTYPE BOOLTYPE
 %token ASSIGN
 %token PLUS MINUS TIMES DIVIDE
 %token EQ NEQ GT LT GTE LTE
 %token <string> IDENT
-%token <string> STRING
-%token <System.Int32> INT
-%token <System.Double> FLOAT
+%token <string> STRINGLIT
+%token <System.Int32> INTLIT
+%token <System.Double> FLOATLIT
+%token <System.Char> CHARLIT
+%token TRUE FALSE
 
 %type <Prog> start
 
@@ -32,20 +35,16 @@ StmtsList:
     | Stmt {[$1]}
 
 Stmt:
-    | VAR IdentList DELIM { DeclStmt($2) } 
+    | Type IdentList DELIM { DeclStmt($1,$2) } 
     | Assign DELIM { AssignStmt($1) }
-    | IF OPAREN RelExpr CPAREN Block ELSE Block { IfStmt($3, $5, $7) }
-    | WHILE OPAREN RelExpr CPAREN Block { WhileStmt($3, $5) }
-    | FOR OPAREN Assign TO Variable CPAREN Block { ForToStmt($3,$5,$7) }
-    | FOR OPAREN Assign DOWNTO Variable CPAREN Block { ForDownToStmt($3,$5,$7) }
-    | FOR OPAREN Assign DELIM RelExpr DELIM Assign CPAREN Block { ForStmt($3, $5, $7, $9) }
+    | IF OPAREN Bool CPAREN Block ELSE Block { IfStmt($3, $5, $7) }
+    | WHILE OPAREN Bool CPAREN Block { WhileStmt($3, $5) }
+    | FOR OPAREN Assign TO Expr CPAREN Block { ForToStmt($3,$5,$7) }
+    | FOR OPAREN Assign DOWNTO Expr CPAREN Block { ForDownToStmt($3,$5,$7) }
+    | FOR OPAREN Assign DELIM Bool DELIM Assign CPAREN Block { ForStmt($3, $5, $7, $9) }
     | READ Identifier DELIM { ReadStmt($2) }
-    | WriteStmt DELIM { WriteStmt($1) }
+    | WRITE Value DELIM { WriteStmt($2) }
     | Block { BlockStmt($1) }
-
-WriteStmt:
-    | WRITE String { WriteStr($2) }
-    | WRITE Expr { WriteExpr($2) }
 
 IdentList:
     | IdentListList { IdentList(List.rev $1) }
@@ -59,7 +58,7 @@ IdentDeclOptAssign:
     | Identifier { Ident($1) }
 
 Assign:
-    | Identifier ASSIGN Expr { AssignExpr($1, $3) }
+    | Identifier ASSIGN Value { AssignValue($1, $3) }
 
 Expr:
     | Expr PLUS Term { Plus($1, $3) }
@@ -72,7 +71,7 @@ Term:
     | Factor { FactorTerm($1) }
 
 Factor:
-    | Variable { VarFactor($1) }
+    | Int { IntFactor($1) }
     | OPAREN Expr CPAREN { ParenExpr($2) }
 
 RelExpr:
@@ -86,13 +85,41 @@ RelOp:
     | GTE { Gte }
     | LTE { Lte }
 
-Variable:
-    | Identifier { IdentVariable($1) }
-    | INT { IntVariable($1) }
-    | FLOAT { FloatVariable($1) }
+Value:
+    | Expr { ExprValue($1) }
+    | Float { FloatValue ($1) }
+    | Char { CharValue ($1) }
+    | String { StringValue($1) }
+    | Bool { BoolValue($1) }
+
+Int:
+    | Identifier { IdentInt($1) }
+    | INTLIT { IntLit($1) }
+
+Float:
+    | Identifier { IdentFloat($1) }
+    | FLOATLIT { FloatLit($1) }
+
+Char:
+    | Identifier { IdentChar($1) }
+    | CHARLIT { CharLit($1) }
 
 String:
-    | STRING { String($1) }
+    | Identifier { IdentString($1) }
+    | STRINGLIT { StringLit($1) }
+
+Bool:
+    | RelExpr { BoolRelExpr($1) }
+    | Identifier { IdentBool($1) }
+    | TRUE { TrueBool }
+    | FALSE { FalseBool }
+
+Type:
+    | INTTYPE { IntType }
+    | FLOATTYPE { FloatType }
+    | CHARTYPE { CharType }
+    | STRINGTYPE { StringType }
+    | BOOLTYPE { BoolType }
 
 Identifier:
     | IDENT { Identifier($1) }
