@@ -5,19 +5,28 @@ open Parser
 open Microsoft.FSharp.Text.Lexing
 
 let lexeme = LexBuffer<char>.LexemeString
+
+let escape =
+    function
+    | "\\n" -> '\n'
+    | "\\a" -> '\a'
+    | "\\t" -> '\t'
+    | "\\r" -> '\r'
+    | "\\\\"-> '\\'
+    | s     -> s.[0]
 }
 
 // These are some regular expression definitions
 let digit = ['0'-'9']
 let alpha = ['a'-'z' 'A'-'Z']
 let ident = alpha (alpha | digit)*
-let whitespace = [' ' '\t' ]
 let newline = ('\n' | '\r' '\n')
 let comment = "//" [^'\r' '\n']*
-let char = "'" ( "\\n" | "\\a" | "\\t" | "\\r" | "\\\\" | "\\'" | [^ '\'']) "'"
+let escapes = "\\n" | "\\a" | "\\t" | "\\r" | "\\\\"
+let char = "'" ( escapes | "\\'" | [^ '\'']) "'"
 
 rule tokenize = parse
-| whitespace     { tokenize lexbuf }
+| ' '            { tokenize lexbuf }
 | newline        { lexbuf.EndPos <- lexbuf.EndPos.NextLine; tokenize lexbuf }
 | comment        { tokenize lexbuf }
 | '\"'           {
@@ -32,12 +41,6 @@ rule tokenize = parse
 | "bool"   { BOOLTYPE }
 
 //Keywords
-| "if"           { IF }
-| "else"         { ELSE }
-| "while"        { WHILE }
-| "for"          { FOR }
-| "to"           { TO }
-| "downto"       { DOWNTO }
 | "read"         { READ }
 | "write"        { WRITE }
 
@@ -48,42 +51,23 @@ rule tokenize = parse
 // Identifiers
 | ident          { IDENT (lexeme lexbuf) }
 
-// Misc
-| '('            { OPAREN }
-| ')'            { CPAREN }
-| '{'            { OBLOCK }
-| '}'            { CBLOCK }
-| ';'            { DELIM }
-| ','            { COMMA }
 // Assign
 | '='            { ASSIGN }
-// ArithOp
-| '+'            { PLUS }
-| '-'            { MINUS }
-| '*'            { TIMES }
-| '/'            { DIVIDE }
-//RelOp
-| ">="          { GTE }
-| "<="          { LTE }
-| "=="          { EQ }
-| "!="          { NEQ }
-| '>'           { GT }
-| '<'           { LT }
+| ';'            { DELIM }
+
 // Numbers
 | digit+                                     { INTLIT (Int32.Parse(lexeme lexbuf)) }
 | digit+ '.' ((digit+) (['e' 'E'] digit+)?)? { FLOATLIT (Convert.ToDouble(lexeme lexbuf)) }
+
 // Chars
-| char          { CHARLIT ((lexeme lexbuf).[1]) }
+| char          { CHARLIT ((lexeme lexbuf).Trim(''') |> escape) }
+
 // EOF
 | eof   { EOF }
 
 and string s = parse
-| "\\n"            { s.Append('\n') |> ignore; string s lexbuf }
-| "\\r"            { s.Append('\r') |> ignore; string s lexbuf }
-| "\\t"            { s.Append('\t') |> ignore; string s lexbuf }
-| "\\a"            { s.Append('\a') |> ignore; string s lexbuf }
 | "\\\""           { s.Append('\"') |> ignore; string s lexbuf }
-| "\\\\"           { s.Append('\\') |> ignore; string s lexbuf }
 | '\"'             { s.ToString() }
+| escapes          { lexeme lexbuf |> escape |> s.Append |> ignore; string s lexbuf }
 | eof              { failwithf "Incomplete string" }
 | _                { s.Append(lexeme lexbuf) |> ignore; string s lexbuf }

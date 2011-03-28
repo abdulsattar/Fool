@@ -1,3 +1,6 @@
 obj
 bin
 *.suo
+Parser.fsi
+Parser.fs
+Lexer.fs
