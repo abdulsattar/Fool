@@ -12,20 +12,21 @@ let main(args : string[]) =
     try
         if args.Length <> 1 then failwith "Usage Fool <filename>"
         let fn = args.[0]
-        if System.String.Compare(System.IO.Path.GetExtension(fn), ".fool", true) <> 0 then
-            printfn "WARNING: You better use FOOL as your extension"
+        if System.String.Compare(System.IO.Path.GetExtension(fn), ".fl", true) <> 0 then
+            printfn "WARNING: You better use \"fl\" as your extension"
 
-        printfn "Lexing..."
         let lexbuf = LexBuffer<char>.FromTextReader (new System.IO.StreamReader(System.IO.Path.Combine(System.Environment.CurrentDirectory, fn)))
 
-        printfn "Parsing..."
-        let program = Parser.Prog Lexer.tokenize lexbuf
+        let program = 
+            try
+                Parser.Prog Lexer.tokenize lexbuf
+            with
+            | _ -> failwithf "Unrecognized parse error at (%d,%d)" lexbuf.EndPos.Line lexbuf.EndPos.Column
 
         printfn "Generating code..."
         generate(program, System.IO.Path.GetFileNameWithoutExtension(fn))
 
-
     with ex ->
-        printfn "Unhandled Exception: %s" ex.Message
+        printfn "%s" ex.Message
 
     0

@@ -11,17 +11,17 @@ Here are a few of it's features:
 Grammar:
 
     Prog 
-            Stmts EOF
+        Stmts EOF
     Block
-            { Stmts }
+        { Stmts }
     Stmts
-            Stmts Stmt
-            Stmt
+        Stmts Stmt
+        Stmt
     Stmt
-            Type Identifier = Value
-            read Identifier;
+        Type Identifier = Value
+        read Identifier;
         write Value;
-            Block
+        Block
         Value
     Value
         Identifier = Value
@@ -39,7 +39,7 @@ Grammar:
         FALSE
         
     Identifier
-            ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9']*
+        ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9']*
     Type
         int
         float
@@ -47,5 +47,5 @@ Grammar:
         string
         bool
     Comment
-            //
+        //
 

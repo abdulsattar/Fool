@@ -39,8 +39,20 @@ let generate(p:Prog, fileName) =
         match s with
         | DeclStmt(t, i, v) -> let t = gType t
                                declareLocal i t
+                               gAssign i v |> ignore
         | ReadStmt(i) -> let id = gIdentifier i
-                         let s = System.Console.ReadLine()
+                         il.Emit(OpCodes.Call, typeof<System.Console>.GetMethod("ReadLine"))
+                         match id.LocalType with
+                         | _ when id.LocalType = typeof<int>    -> il.Emit(OpCodes.Call, typeof<System.Int32>.GetMethod("Parse", [| typeof<string> |]))
+                                                                   il.Emit(OpCodes.Stloc, id)
+                         | _ when id.LocalType = typeof<float>  -> il.Emit(OpCodes.Call, typeof<System.Double>.GetMethod("Parse", [| typeof<string> |]))
+                                                                   il.Emit(OpCodes.Stloc, id)
+                         | _ when id.LocalType = typeof<char>   -> il.Emit(OpCodes.Call, typeof<System.Char>.GetMethod("Parse"))
+                                                                   il.Emit(OpCodes.Stloc, id)
+                         | _ when id.LocalType = typeof<bool>   -> il.Emit(OpCodes.Call, typeof<System.Boolean>.GetMethod("Parse"))
+                                                                   il.Emit(OpCodes.Stloc, id)
+                         | _ when id.LocalType = typeof<string> -> il.Emit(OpCodes.Stloc, id)
+                         | _                                    -> failwith "Invalid READ statement"
                          ()
 
         | WriteStmt(v) -> let t = gValue v
