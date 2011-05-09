@@ -1,0 +1,134 @@
+﻿%{
+open Ast
+%}
+
+%token READ WRITE TRUE FALSE NEW RETURN FUN TO DOWNTO FOR TYPE IF ELIF ELSE WHILE
+%token <string> IDENT
+%token <int> INTLIT
+%token <float> FLOATLIT
+%token <char> CHARLIT
+%token <string> STRINGLIT
+%token <string> NAMESPACE
+%token COMMA LPAREN RPAREN LBRACE RBRACE EOF ASSIGN DELIM PERIOD COLON ARROW
+%token GT LT EQ NEQ GTE LTE PLUS MINUS MULT DIV NOT
+
+%left ASSIGN
+%left GT LT EQ NEQ GTE LTE
+%left NOT
+%left PLUS MINUS
+%left MULT DIV
+%left PERIOD
+
+%start Prog
+
+%type <Prog> Prog
+
+%%
+Prog:
+| Types EOF                               { TypesProg(List.rev $1)}
+Types:
+| Types Type                              { $2 :: $1 }
+| Type                                    { [$1] }
+
+Type:
+| TYPE Identifier Parents LBRACE TypeStmts RBRACE   { TypeStmtsType($2, $3, $5) }
+| NAMESPACE DELIM                           { OpenNamespace($1) }
+
+Parents:
+| COLON ParentsList { List.rev $2 }
+| { [] }
+ParentsList:
+| Identifier { [$1] }
+| Parents COMMA Identifier { $3 :: $1 }
+
+TypeStmts:
+| TypeStmtsList { List.rev $1 }
+TypeStmtsList:
+| TypeStmtsList TypeStmt { $2::$1 }
+| TypeStmt { [$1] }
+
+TypeStmt:
+| Identifier Identifier DELIM                              { TypeDeclStmt($1, $2) }
+| Identifier LPAREN ParamsDeclList RPAREN LBRACE Stmts RBRACE { TypeConstructorStmt($1, $3, $6) }
+| Identifier Identifier LPAREN ParamsDeclList RPAREN LBRACE Stmts RBRACE { TypeMethodStmt(($1, $2), $4, $7 ) }
+
+ParamsDeclList:
+| ParamsDecl                         { List.rev $1 }
+ParamsDecl:
+| ParamsDecl COMMA Identifier Identifier   { ($3,$4) :: $1 }
+| Identifier Identifier                    { [$1,$2] }
+|                                          { [] }
+
+Block:
+| LBRACE Stmts RBRACE                { StmtsBlock($2) }
+
+Stmts:
+| StmtsList                          { StmtsList(List.rev $1) }
+StmtsList:
+| StmtsList Stmt                     { $2 :: $1 }
+| Stmt                               { [$1] }
+
+Stmt:
+| Identifier Identifier ASSIGN Value DELIM { DeclStmt($1, $2, $4) }
+| READ Identifier DELIM              { ReadStmt($2) }
+| WRITE Value DELIM                  { WriteStmt($2) }
+| Block DELIM                        { BlockStmt($1) }
+| Value DELIM                        { ValueStmt($1) }
+| RETURN Value DELIM                 { ReturnStmt(Some($2)) }
+| RETURN DELIM                       { ReturnStmt(None) }
+| FOR Identifier ASSIGN Value TO Value LBRACE Stmts RBRACE { ForToStmt($2, $4, $6, $8) }
+| FOR Identifier ASSIGN Value DOWNTO Value LBRACE Stmts RBRACE { ForToStmt($2, $4, $6, $8) }
+| WHILE LPAREN Value RPAREN Block { WhileStmt($3,$5) }
+| IfStmt                             { IfStmt($1) }
+
+IfStmt:
+| IF LPAREN Value RPAREN Block Elifs { If($3,$5, $6) }
+| IF LPAREN Value RPAREN Block Elifs ELSE Block { IfElse($3,$5,$6,$8) }
+
+Elifs:
+| ElifList { List.rev $1 }
+
+ElifList:
+| ElifList ELIF LPAREN Value RPAREN Block { ($4,$6) :: $1 }
+| ELIF LPAREN Value RPAREN Block { [($3,$5)] }
+|                                { [] }
+
+Value:
+| Identifier ASSIGN Value                                               { AssignValue($1,$3) }
+| Identifier                                                            { IdentifierValue($1) }
+| Literal                                                               { LiteralValue($1) }
+| NEW Identifier LPAREN ValueList RPAREN                                { ConstructorValue($2, $4) }
+| Value PERIOD Identifier LPAREN ValueList RPAREN                       { MemberCallValue($1, $3, List.rev $5) }
+| Value PERIOD Identifier                                               { MemberValue($1, $3) }
+| LPAREN Value RPAREN                                                   { ParenValue($2) }
+| FUN LPAREN ParamsDeclList RPAREN COLON Identifier LBRACE Stmts RBRACE { AnonymFunction($3,$6,$8) }
+| Value PLUS Value                                                      { BinaryOperatorValue(Plus, $1, $3) }
+| Value MINUS Value                                                     { BinaryOperatorValue(Minus, $1, $3) }
+| Value MULT Value                                                      { BinaryOperatorValue(Mult, $1, $3) }
+| Value DIV Value                                                       { BinaryOperatorValue(Div, $1, $3) }
+| Value EQ Value                                                        { BinaryOperatorValue(Eq, $1, $3) }
+| Value NEQ Value                                                       { BinaryOperatorValue(Neq, $1, $3) }
+| Value GT Value                                                        { BinaryOperatorValue(Gt, $1, $3) }
+| Value LT Value                                                        { BinaryOperatorValue(Lt, $1, $3) }
+| Value GTE Value                                                       { BinaryOperatorValue(Gte, $1, $3) }
+| Value LTE Value                                                       { BinaryOperatorValue(Lte, $1, $3) }
+| NOT Value                                                   { UnaryOperatorValue(Not, $2) }
+
+ValueList:
+| ValueList COMMA Value { $3::$1 }
+| Value { [$1] }
+|       { []   }
+
+Literal:
+| INTLIT                             { IntLit($1) }
+| FLOATLIT                           { FloatLit($1) }
+| CHARLIT                            { CharLit($1) }
+| STRINGLIT                          { StringLit($1) }
+| BoolLiteral                        { BoolLit($1) }
+
+BoolLiteral:
+| TRUE                               { TrueBool }
+| FALSE                              { FalseBool }
+
+Identifier:
+| IDENT                              { Identifier($1) }

@@ -20,6 +20,7 @@ let escape =
 let digit = ['0'-'9']
 let alpha = ['a'-'z' 'A'-'Z']
 let ident = alpha (alpha | digit)*
+let namespace = "open " ident ('.' ident)*
 let newline = ('\n' | '\r' '\n')
 let comment = "//" [^'\r' '\n']*
 let escapes = "\\n" | "\\a" | "\\t" | "\\r" | "\\\\"
@@ -33,16 +34,20 @@ rule tokenize = parse
                      let sb = new System.Text.StringBuilder()
                      STRINGLIT (string sb lexbuf)
                  }
-// Types
-| "int"    { INTTYPE }
-| "float"  { FLOATTYPE }
-| "char"   { CHARTYPE }
-| "string" { STRINGTYPE }
-| "bool"   { BOOLTYPE }
-
 //Keywords
+| "type"         { TYPE }
 | "read"         { READ }
 | "write"        { WRITE }
+| "new"          { NEW }
+| "return"       { RETURN }
+| "fun"          { FUN }
+| "for"          { FOR }
+| "to"           { TO }
+| "downto"       { DOWNTO }
+| "if"           { IF }
+| "elif"         { ELIF }
+| "else"         { ELSE }
+| "while"        { WHILE }
 
 // Reserved Words
 | "true"         { TRUE }
@@ -50,10 +55,33 @@ rule tokenize = parse
 
 // Identifiers
 | ident          { IDENT (lexeme lexbuf) }
+| namespace      { NAMESPACE (lexeme lexbuf) }
 
-// Assign
 | '='            { ASSIGN }
 | ';'            { DELIM }
+| ','            { COMMA }
+| '.'            { PERIOD }
+| "->"           { ARROW }
+| ':'            { COLON }
+
+// Operators
+| '-'            { MINUS }
+| '+'            { PLUS }
+| '*'            { MULT }
+| '/'            { DIV }
+| '>'            { GT }
+| '<'            { LT }
+| "=="           { EQ }
+| "!="           { NEQ }
+| ">="           { GTE }
+| "<="           { LTE }
+| "!"            { NOT }
+
+// Braces
+| '(' { LPAREN }
+| ')' { RPAREN }
+| '{' { LBRACE }
+| '}' { RBRACE }
 
 // Numbers
 | digit+                                     { INTLIT (Int32.Parse(lexeme lexbuf)) }

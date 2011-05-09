@@ -11,7 +11,21 @@ Here are a few of it's features:
 Grammar:
 
     Prog 
-        Stmts EOF
+        Classes EOF
+    Classes
+        Classes Class
+        Class
+    Class
+        class Identifier { ClassStmts }
+    ClassStmts
+        ClassStmts ClassStmt
+        ClassStmt
+    ClassStmt
+        Type Identifier = Value
+        Type Identifier ( ParamsDeclList ) { Stmts }
+    ParamsDeclList
+        ParamsDeclList, Type Identifier
+        Type Identifier
     Block
         { Stmts }
     Stmts
