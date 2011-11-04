@@ -70,6 +70,7 @@ StmtsList:
 
 Stmt:
 | Identifier Identifier ASSIGN Value DELIM { DeclStmt($1, $2, $4) }
+| Identifier ASSIGN Value DELIM      { AssignStmt($1,$3) }
 | READ Identifier DELIM              { ReadStmt($2) }
 | WRITE Value DELIM                  { WriteStmt($2) }
 | Block DELIM                        { BlockStmt($1) }
@@ -94,7 +95,6 @@ ElifList:
 |                                { [] }
 
 Value:
-| Identifier ASSIGN Value                                               { AssignValue($1,$3) }
 | Identifier                                                            { IdentifierValue($1) }
 | Literal                                                               { LiteralValue($1) }
 | NEW Identifier LPAREN ValueList RPAREN                                { ConstructorValue($2, $4) }

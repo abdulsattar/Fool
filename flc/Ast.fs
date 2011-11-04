@@ -22,6 +22,7 @@ and Stmts =
 
 and Stmt =
     | DeclStmt of Identifier * Identifier * Value
+    | AssignStmt of Identifier * Value
     | ReadStmt of Identifier
     | WriteStmt of Value
     | BlockStmt of Block
@@ -37,7 +38,6 @@ and IfStmt =
     | IfElse of Value * Block * (Value * Block) list * Block
 
 and Value =
-    | AssignValue of Identifier * Value
     | IdentifierValue of Identifier
     | LiteralValue of Literal
     | ConstructorValue of Identifier * Value list

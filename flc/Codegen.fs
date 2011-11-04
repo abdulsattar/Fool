@@ -108,6 +108,7 @@ let generate(p:Prog, fileName) =
             let ty = resolveType tp
             declareLocal i ty
             gAssign i v il t st |> ignore
+        | AssignStmt(i,v) -> gAssign i v il t st
         | ReadStmt(i) ->
             let id = gIdentifier i il t st
             il.Emit(OpCodes.Call, typeof<System.Console>.GetMethod("ReadLine"))
@@ -191,22 +192,17 @@ let generate(p:Prog, fileName) =
                                  gBlock e mb t st
                                  il.MarkLabel(label)
          
-    and gAssign i v (il:ILGenerator) (t:TypeBuilder) (st:SymbolTable): System.Type =
+    and gAssign i v (il:ILGenerator) (t:TypeBuilder) (st:SymbolTable) =
         let ty = gValue v il t st
         let id = gIdentifier i il t st
         if ty <> id.getType() then failwithf "%A is not compatible with %A" t (id.getType())
         match id with
         | LocalVariable(l) ->   il.Emit(OpCodes.Stloc, l)
-                                il.Emit(OpCodes.Ldloc, l)
         | Parameter(_,_,p) ->   il.Emit(OpCodes.Starg, p)
-                                il.Emit(OpCodes.Ldarg, p)                
         | Field(f) -> il.Emit(OpCodes.Stfld, f)
-                      il.Emit(OpCodes.Ldfld, f)
-        id.getType()
 
     and gValue v (il:ILGenerator) (t:TypeBuilder) (st:SymbolTable): System.Type =
         match v with
-        | AssignValue(i,v) -> gAssign i v il t st
         | IdentifierValue(i) ->
             let id = gIdentifier i il t st
             match id with
